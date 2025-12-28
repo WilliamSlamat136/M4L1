@@ -59,7 +59,7 @@ async def on_interaction(interaction):
         if manager.get_winners_count(custom_id) < 3:
             res = manager.add_winner(user_id, custom_id)
             if res:
-                img = manager.add_prize(custom_id)
+                img = manager.get_prize_img(custom_id)
                 with open(f'img/{img}', 'rb') as photo:
                     file = discord.File(photo)
                     await interaction.response.send_message(file=file, content="Selamat, kamu mendapatkan gambar!")

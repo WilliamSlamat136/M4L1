@@ -104,12 +104,12 @@ class DatabaseManager:
         with conn:
             cur = conn.cursor()
             cur.execute('''
-    SELECT username, COUNT() FROM users 
-                        INNER JOIN winners 
-                        ON users.user_id = winners.user_id
-                        GROUP BY users.user_id
-                        ORDER BY total DESC
-                        LIMIT 10
+    SELECT user_name, COUNT(*) as total FROM users 
+                            INNER JOIN winners 
+                            ON users.user_id = winners.user_id 
+                            GROUP BY users.user_id
+                            ORDER BY total DESC
+                            LIMIT 10
     ''')
             return cur.fetchall()
     
