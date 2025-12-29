@@ -3,6 +3,10 @@ from datetime import datetime
 from config import DATABASE 
 import os
 import cv2
+import numpy as np
+import os
+from logic import *
+from math import sqrt, ceil, floor
 
 class DatabaseManager:
     def __init__(self, database):
@@ -112,6 +116,56 @@ class DatabaseManager:
                             LIMIT 10
     ''')
             return cur.fetchall()
+        
+    def get_winners_img(self, user_id):
+        conn = sqlite3.connect(self.database)
+        with conn:
+            cur = conn.cursor()
+            cur.execute(''' 
+        SELECT image FROM winners 
+        INNER JOIN prizes ON 
+        winners.prize_id = prizes.prize_id
+        WHERE user_id = ?''', (user_id, ))
+            return cur.fetchall()
+    
+def create_collage(image_paths, thumb_size=(300, 300)):
+    images = []
+
+    for path in image_paths:
+        img = cv2.imread(path)
+        if img is None:
+            continue
+        img = cv2.resize(img, thumb_size)
+        images.append(img)
+
+    if not images:
+        return None
+
+    num_images = len(images)
+    num_cols = ceil(sqrt(num_images))
+    num_rows = ceil(num_images / num_cols)
+
+    h, w, _ = images[0].shape
+    collage = np.zeros((num_rows * h, num_cols * w, 3), dtype=np.uint8)
+
+    for i, image in enumerate(images):
+        row = i // num_cols
+        col = i % num_cols
+        collage[row*h:(row+1)*h, col*w:(col+1)*w] = image
+
+    return collage
+
+
+m = DatabaseManager(DATABASE)
+info = m.get_winners_img("user_id")
+prizes = [x[0] for x in info]
+image_paths = os.listdir('img')
+image_paths = [f'img/{x}' if x in prizes else f'hidden_img/{x}' for x in image_paths]
+collage = create_collage(image_paths)
+
+cv2.imshow('Collage', collage)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
     
   
 def hide_img(img_name):

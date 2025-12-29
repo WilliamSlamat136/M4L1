@@ -3,6 +3,8 @@ from discord.ext import commands, tasks
 from logic import DatabaseManager, hide_img
 from config import TOKEN, DATABASE
 import os
+import cv2
+from logic import create_collage
 
 intents = discord.Intents.default()
 intents.messages = True
@@ -49,6 +51,47 @@ async def rating(ctx):
     res = '\n'.join(res)
     res = f'|USER_NAME    |COUNT_PRIZE|\n{"_"*26}\n' + res
     await ctx.send(f"```\n{res}\n```")
+
+@bot.command()
+async def get_my_score(ctx):
+    user_id = ctx.author.id
+
+    # Ambil daftar image hadiah yang dimenangkan user
+    prizes = manager.get_winners_img(user_id)
+
+    if not prizes:
+        await ctx.send("Kamu belum mendapatkan hadiah apa pun!")
+        return
+
+    prizes = [x[0] for x in prizes]
+
+    # Ambil semua gambar yang tersedia
+    all_images = os.listdir('img')
+
+    # Tentukan path: hadiah terbuka / tersembunyi
+    image_paths = [
+        f'img/{img}' if img in prizes else f'hidden_img/{img}'
+        for img in all_images
+    ]
+
+    # Buat kolase
+    collage = create_collage(image_paths)
+
+    # Simpan sementara
+    collage_path = f'temp/collage_{user_id}.png'
+    os.makedirs('temp', exist_ok=True)
+    cv2.imwrite(collage_path, collage)
+
+    # Kirim ke Discord
+    with open(collage_path, 'rb') as f:
+        file = discord.File(f)
+        await ctx.send(
+            content="Koleksi hadiah kamu:",
+            file=file
+        )
+
+    # Hapus file sementara
+    os.remove(collage_path)
 
 @bot.event
 async def on_interaction(interaction):
