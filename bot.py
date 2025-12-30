@@ -19,10 +19,11 @@ manager.create_tables()
 @bot.command()
 async def start(ctx):
     user_id = ctx.author.id
+    user_name = ctx.author.name
     if user_id in manager.get_users():
         await ctx.send("Kamu sudah terdaftar!")
     else:
-        manager.add_user(user_id, ctx.author.name)
+        manager.add_user(0, user_id, user_name)
         await ctx.send("""Hai! Selamat datang! Kamu telah berhasil terdaftar! Kamu akan menerima gambar baru setiap menit, dan kamu memiliki kesempatan untuk mendapatkannya! Untuk melakukannya, kamu perlu mengklik tombol 'Ambil!'! Hanya tiga pengguna pertama yang mengklik tombol 'Ambil!' yang akan mendapatkan gambarnya! =)""")
 
 # Tugas terjadwal untuk mengirim gambar
@@ -47,9 +48,9 @@ async def send_image(user, image_path, prize_id):
 @bot.command()
 async def rating(ctx):
     res = manager.get_rating()
-    res = [f'| @{x[0]:<11} | {x[1]:<11}|\n{"_"*26}' for x in res]
+    res = [f'| {x[0]:<14} | @{x[1]:<14} | {x[2]:<11} |\n{"_"*44}' for x in res]
     res = '\n'.join(res)
-    res = f'|USER_NAME    |COUNT_PRIZE|\n{"_"*26}\n' + res
+    res = f'|TOTAL_SCORE    |USER_NAME    |COUNT_PRIZE|\n{"_"*44}\n' + res
     await ctx.send(f"```\n{res}\n```")
 
 @bot.command()

@@ -17,6 +17,7 @@ class DatabaseManager:
         with conn:
             conn.execute('''
             CREATE TABLE IF NOT EXISTS users (
+                user_score INTEGER, 
                 user_id INTEGER PRIMARY KEY,
                 user_name TEXT
             )
@@ -42,16 +43,17 @@ class DatabaseManager:
 
             conn.commit()
 
-    def add_user(self, user_id, user_name):
+    def add_user(self, user_score, user_id, user_name):
         conn = sqlite3.connect(self.database)
         with conn:
-            conn.execute('INSERT INTO users VALUES (?, ?)', (user_id, user_name))
+            conn.execute('INSERT OR IGNORE INTO users VALUES (?, ?, ?)', (user_score, user_id, user_name))
             conn.commit()
 
     def add_prize(self, data):
         conn = sqlite3.connect(self.database)
         with conn:
             conn.executemany('''INSERT INTO prizes (image) VALUES (?)''', data)
+            conn.execute('UPDATE users SET user_score = user_score + ABS(RANDOM()) % 4 + 2 WHERE user_id = users.user_id')
             conn.commit()
 
     def add_winner(self, user_id, prize_id):
@@ -80,7 +82,7 @@ class DatabaseManager:
         with conn:
             cur = conn.cursor() 
             cur.execute("SELECT * FROM users")
-            return [x[0] for x in cur.fetchall()] 
+            return [x[1] for x in cur.fetchall()] 
         
     def get_prize_img(self, prize_id):
         conn = sqlite3.connect(self.database)
@@ -108,7 +110,7 @@ class DatabaseManager:
         with conn:
             cur = conn.cursor()
             cur.execute('''
-    SELECT user_name, COUNT(*) as total FROM users 
+    SELECT user_score, user_name, COUNT(*) AS total FROM users
                             INNER JOIN winners 
                             ON users.user_id = winners.user_id 
                             GROUP BY users.user_id
